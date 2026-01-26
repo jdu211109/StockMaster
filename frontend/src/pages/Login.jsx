@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
 
@@ -20,7 +20,7 @@ export default function Login() {
             await login(email, password);
             navigate('/');
         } catch (err) {
-            setError(err.response?.data?.detail || 'Login failed. Please try again.');
+            setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
         } finally {
             setIsLoading(false);
         }
@@ -46,7 +46,7 @@ export default function Login() {
                     }}>
                         StockMaster
                     </h1>
-                    <p className="text-muted">Sign in to your account</p>
+                    <p className="text-muted">Inventory Management</p>
                 </div>
 
                 {error && (
@@ -82,7 +82,7 @@ export default function Login() {
                                 type="email"
                                 className="input"
                                 style={{ paddingLeft: 40 }}
-                                placeholder="you@example.com"
+                                placeholder="admin@stockmaster.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -123,10 +123,17 @@ export default function Login() {
                     </button>
                 </form>
 
-                <p style={{ textAlign: 'center', marginTop: 'var(--space-lg)', fontSize: 'var(--font-size-sm)' }}>
-                    Don't have an account?{' '}
-                    <Link to="/register">Create one</Link>
-                </p>
+                <div style={{ 
+                    marginTop: 'var(--space-xl)', 
+                    padding: 'var(--space-md)', 
+                    background: 'rgba(59, 130, 246, 0.1)', 
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--font-size-sm)'
+                }}>
+                    <p style={{ fontWeight: 500, marginBottom: 'var(--space-xs)' }}>Test Account:</p>
+                    <p className="text-muted">Email: admin@stockmaster.com</p>
+                    <p className="text-muted">Password: admin123</p>
+                </div>
             </div>
         </div>
     );

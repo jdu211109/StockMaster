@@ -20,7 +20,7 @@ class ProductBase(BaseModel):
 
 # Create schema
 class ProductCreate(ProductBase):
-    pass
+    initial_stock: int = Field(default=0, ge=0)  # Initial stock quantity
 
 
 # Update schema
@@ -36,6 +36,7 @@ class ProductUpdate(BaseModel):
     category_id: Optional[int] = None
     supplier_id: Optional[int] = None
     is_active: Optional[bool] = None
+    new_stock: Optional[int] = Field(None, ge=0)  # New stock quantity
 
 
 # Response schema

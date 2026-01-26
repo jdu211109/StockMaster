@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { Package, Warehouse, AlertTriangle, ArrowLeftRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { Package, AlertTriangle, ArrowLeftRight, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { inventoryService } from '../services/inventoryService';
 
 export default function Dashboard() {
     const { data: products } = useQuery({
         queryKey: ['products'],
-        queryFn: () => inventoryService.getProducts({ size: 1 })
+        queryFn: () => inventoryService.getProducts({ size: 100 })
     });
 
     const { data: lowStock } = useQuery({
@@ -16,30 +16,42 @@ export default function Dashboard() {
 
     const { data: transactions } = useQuery({
         queryKey: ['recentTransactions'],
-        queryFn: () => inventoryService.getTransactions({ size: 5 })
+        queryFn: () => inventoryService.getTransactions({ size: 10 })
     });
 
-    const { data: locations } = useQuery({
-        queryKey: ['locations'],
-        queryFn: () => inventoryService.getLocations()
-    });
+    // Calculate total warehouse value
+    const totalStockValue = products?.items?.reduce((sum, p) => 
+        sum + (parseFloat(p.unit_price) * p.total_stock), 0
+    ) || 0;
 
-    // Mock chart data
+    // Chart data based on recent transactions
     const chartData = [
-        { name: 'Mon', in: 120, out: 80 },
-        { name: 'Tue', in: 95, out: 110 },
-        { name: 'Wed', in: 150, out: 90 },
-        { name: 'Thu', in: 80, out: 120 },
-        { name: 'Fri', in: 200, out: 150 },
-        { name: 'Sat', in: 60, out: 40 },
-        { name: 'Sun', in: 30, out: 20 },
+        { name: 'Mon', in: 0, out: 0 },
+        { name: 'Tue', in: 0, out: 0 },
+        { name: 'Wed', in: 0, out: 0 },
+        { name: 'Thu', in: 0, out: 0 },
+        { name: 'Fri', in: 0, out: 0 },
+        { name: 'Sat', in: 0, out: 0 },
+        { name: 'Sun', in: 0, out: 0 },
     ];
+
+    // Fill data from transactions
+    transactions?.items?.forEach(t => {
+        const date = new Date(t.created_at);
+        const dayIndex = date.getDay();
+        const ruDayIndex = dayIndex === 0 ? 6 : dayIndex - 1;
+        if (t.type === 'stock_in') {
+            chartData[ruDayIndex].in += t.quantity;
+        } else {
+            chartData[ruDayIndex].out += t.quantity;
+        }
+    });
 
     const stats = [
         { label: 'Total Products', value: products?.total || 0, icon: Package, color: '#3b82f6' },
-        { label: 'Locations', value: locations?.total || 0, icon: Warehouse, color: '#8b5cf6' },
-        { label: 'Low Stock Alerts', value: lowStock?.total || 0, icon: AlertTriangle, color: '#f59e0b' },
-        { label: 'Transactions Today', value: transactions?.total || 0, icon: ArrowLeftRight, color: '#10b981' },
+        { label: 'Stock Value', value: `$${totalStockValue.toLocaleString()}`, icon: DollarSign, color: '#8b5cf6' },
+        { label: 'Low Stock', value: lowStock?.total || 0, icon: AlertTriangle, color: '#f59e0b' },
+        { label: 'Transactions', value: transactions?.total || 0, icon: ArrowLeftRight, color: '#10b981' },
     ];
 
     return (
@@ -67,7 +79,7 @@ export default function Dashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
                 {/* Stock Movement Chart */}
                 <div className="card">
-                    <h2 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--space-lg)' }}>Stock Movement (Last 7 Days)</h2>
+                    <h2 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--space-lg)' }}>Stock Movement (Week)</h2>
                     <div style={{ height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData}>
@@ -96,21 +108,35 @@ export default function Dashboard() {
                 <div className="card">
                     <h2 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--space-lg)', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
                         <AlertTriangle size={20} style={{ color: 'var(--color-warning)' }} />
-                        Low Stock Alerts
+                        Low Stock
                     </h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', maxHeight: 280, overflowY: 'auto' }}>
                         {lowStock?.items?.length > 0 ? (
-                            lowStock.items.slice(0, 5).map((item, i) => (
-                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-sm)', background: 'rgba(245, 158, 11, 0.1)', borderRadius: 'var(--radius-md)' }}>
+                            lowStock.items.map((item, i) => (
+                                <div key={i} style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center', 
+                                    padding: 'var(--space-sm)', 
+                                    background: item.current_quantity <= 5 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', 
+                                    borderRadius: 'var(--radius-md)',
+                                    border: item.current_quantity <= 5 ? '1px solid rgba(239, 68, 68, 0.3)' : 'none'
+                                }}>
                                     <div>
                                         <div style={{ fontWeight: 500 }}>{item.product_name}</div>
-                                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{item.location_name}</div>
+                                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                            Min. level: {item.reorder_level}
+                                        </div>
                                     </div>
-                                    <span className="badge badge-warning">{item.current_quantity} left</span>
+                                    <span className={`badge ${item.current_quantity <= 5 ? 'badge-danger' : 'badge-warning'}`}>
+                                        {item.current_quantity} pcs
+                                    </span>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-muted">No low stock alerts</p>
+                            <p className="text-muted" style={{ textAlign: 'center', padding: 'var(--space-lg)' }}>
+                                ✓ All products are in sufficient quantity
+                            </p>
                         )}
                     </div>
                 </div>
@@ -125,7 +151,7 @@ export default function Dashboard() {
                             <th>Product</th>
                             <th>Type</th>
                             <th>Quantity</th>
-                            <th>Location</th>
+                            <th>Reference</th>
                             <th>Date</th>
                         </tr>
                     </thead>
@@ -133,22 +159,26 @@ export default function Dashboard() {
                         {transactions?.items?.length > 0 ? (
                             transactions.items.map((t) => (
                                 <tr key={t.id}>
-                                    <td>{t.product_name || 'N/A'}</td>
+                                    <td>{t.product_name || '-'}</td>
                                     <td>
-                                        <span className={`badge ${t.type === 'stock_in' ? 'badge-success' : t.type === 'stock_out' ? 'badge-danger' : 'badge-info'}`}>
-                                            {t.type.replace('_', ' ')}
+                                        <span className={`badge ${t.type === 'stock_in' ? 'badge-success' : 'badge-danger'}`}>
+                                            {t.type === 'stock_in' ? 'Stock In' : 'Stock Out'}
                                         </span>
                                     </td>
                                     <td style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
-                                        {t.type === 'stock_in' ? <TrendingUp size={16} className="text-success" /> : <TrendingDown size={16} className="text-danger" />}
+                                        {t.type === 'stock_in' ? (
+                                            <TrendingUp size={16} style={{ color: 'var(--color-success)' }} />
+                                        ) : (
+                                            <TrendingDown size={16} style={{ color: 'var(--color-danger)' }} />
+                                        )}
                                         {t.quantity}
                                     </td>
-                                    <td>{t.location_name || 'N/A'}</td>
-                                    <td className="text-muted">{new Date(t.created_at).toLocaleDateString()}</td>
+                                    <td className="text-muted">{t.reference || '-'}</td>
+                                    <td className="text-muted">{new Date(t.created_at).toLocaleString()}</td>
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan={5} className="text-center text-muted">No recent transactions</td></tr>
+                            <tr><td colSpan={5} className="text-center text-muted">No transactions</td></tr>
                         )}
                     </tbody>
                 </table>
