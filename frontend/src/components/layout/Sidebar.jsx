@@ -2,19 +2,14 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Package,
-    Warehouse,
-    Users,
     ArrowLeftRight,
-    LogOut,
-    Settings
+    LogOut
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
 const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/products', icon: Package, label: 'Products' },
-    { path: '/inventory', icon: Warehouse, label: 'Inventory' },
-    { path: '/suppliers', icon: Users, label: 'Suppliers' },
     { path: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
 ];
 
@@ -83,11 +78,13 @@ export default function Sidebar() {
                         justifyContent: 'center',
                         fontWeight: 600
                     }}>
-                        {user?.full_name?.charAt(0) || 'U'}
+                        {user?.full_name?.charAt(0) || 'A'}
                     </div>
                     <div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 500 }}>{user?.full_name}</div>
-                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{user?.role}</div>
+                        <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 500 }}>{user?.full_name || 'Administrator'}</div>
+                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                            {user?.role === 'admin' ? 'Administrator' : user?.role === 'manager' ? 'Manager' : 'Staff'}
+                        </div>
                     </div>
                 </div>
                 <button
@@ -96,7 +93,7 @@ export default function Sidebar() {
                     style={{ width: '100%', justifyContent: 'flex-start' }}
                 >
                     <LogOut size={18} />
-                    Logout
+                    Sign Out
                 </button>
             </div>
         </aside>

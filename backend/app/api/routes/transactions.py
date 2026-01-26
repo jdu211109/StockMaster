@@ -82,21 +82,32 @@ async def create_transaction(
     if not product:
         raise HTTPException(status_code=400, detail="Product not found")
     
-    # Validate location
-    location = (await db.execute(select(Location).where(Location.id == data.location_id))).scalar_one_or_none()
-    if not location:
-        raise HTTPException(status_code=400, detail="Location not found")
+    # Get or create default location
+    location_id = data.location_id
+    if not location_id:
+        # Find or create default location
+        location_result = await db.execute(select(Location).limit(1))
+        location = location_result.scalar_one_or_none()
+        if not location:
+            location = Location(name="Main Warehouse", type="warehouse")
+            db.add(location)
+            await db.flush()
+        location_id = location.id
+    else:
+        location = (await db.execute(select(Location).where(Location.id == location_id))).scalar_one_or_none()
+        if not location:
+            raise HTTPException(status_code=400, detail="Location not found")
     
     # Get or create inventory record
     inv_result = await db.execute(
         select(Inventory).where(
-            (Inventory.product_id == data.product_id) & (Inventory.location_id == data.location_id)
+            (Inventory.product_id == data.product_id) & (Inventory.location_id == location_id)
         )
     )
     inventory = inv_result.scalar_one_or_none()
     
     if not inventory:
-        inventory = Inventory(product_id=data.product_id, location_id=data.location_id, quantity=0)
+        inventory = Inventory(product_id=data.product_id, location_id=location_id, quantity=0)
         db.add(inventory)
     
     # Update inventory based on transaction type
@@ -131,7 +142,7 @@ async def create_transaction(
     
     # Create transaction record
     transaction = Transaction(
-        product_id=data.product_id, location_id=data.location_id,
+        product_id=data.product_id, location_id=location_id,
         type=data.type, quantity=data.quantity, reference=data.reference,
         notes=data.notes, destination_location_id=data.destination_location_id,
         user_id=current_user.id
@@ -140,11 +151,65 @@ async def create_transaction(
     await db.commit()
     await db.refresh(transaction)
     
+    # Get location name
+    location_obj = (await db.execute(select(Location).where(Location.id == location_id))).scalar_one_or_none()
+    
     return TransactionResponse(
         id=transaction.id, product_id=transaction.product_id, location_id=transaction.location_id,
         type=transaction.type, quantity=transaction.quantity, reference=transaction.reference,
         notes=transaction.notes, destination_location_id=transaction.destination_location_id,
         user_id=transaction.user_id, created_at=transaction.created_at,
-        product_name=product.name, product_sku=product.sku, location_name=location.name,
+        product_name=product.name, product_sku=product.sku, 
+        location_name=location_obj.name if location_obj else None,
         user_name=current_user.full_name
+    )
+
+
+@router.get("/export/csv")
+async def export_transactions_csv(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: CurrentUser,
+    type: Optional[TransactionType] = None,
+):
+    """Export transactions to CSV."""
+    from fastapi.responses import StreamingResponse
+    import io
+    import csv
+    
+    query = select(Transaction).options(
+        selectinload(Transaction.product),
+        selectinload(Transaction.location),
+        selectinload(Transaction.user)
+    )
+    
+    if type:
+        query = query.where(Transaction.type == type)
+    
+    query = query.order_by(Transaction.created_at.desc())
+    result = await db.execute(query)
+    transactions = result.scalars().all()
+    
+    output = io.StringIO()
+    output.write('\ufeff')  # BOM for Excel
+    writer = csv.writer(output, delimiter=';')
+    writer.writerow(['Дата', 'Тип', 'Товар', 'Артикул', 'Количество', 'Документ', 'Примечание', 'Пользователь'])
+    
+    for t in transactions:
+        type_name = 'Приход' if t.type == TransactionType.STOCK_IN else 'Расход'
+        writer.writerow([
+            t.created_at.strftime('%Y-%m-%d %H:%M'),
+            type_name,
+            t.product.name if t.product else '',
+            t.product.sku if t.product else '',
+            t.quantity,
+            t.reference or '',
+            t.notes or '',
+            t.user.full_name if t.user else ''
+        ])
+    
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=transactions_{datetime.now().strftime('%Y%m%d')}.csv"}
     )

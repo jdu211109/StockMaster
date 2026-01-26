@@ -7,7 +7,7 @@ from app.models.transaction import TransactionType
 # Base schema
 class TransactionBase(BaseModel):
     product_id: int
-    location_id: int
+    location_id: Optional[int] = None  # Optional - will use default location
     type: TransactionType
     quantity: int = Field(..., gt=0)
     reference: Optional[str] = Field(None, max_length=100)

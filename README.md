@@ -119,6 +119,6 @@ StockMaster/
 ## 📝 License
 
 MIT License
-x`
+
 Email	admin@stockmaster.com
 Password	admin123
