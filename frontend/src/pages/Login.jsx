@@ -122,18 +122,6 @@ export default function Login() {
                         {isLoading ? 'Signing in...' : 'Sign In'}
                     </button>
                 </form>
-
-                <div style={{ 
-                    marginTop: 'var(--space-xl)', 
-                    padding: 'var(--space-md)', 
-                    background: 'rgba(59, 130, 246, 0.1)', 
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: 'var(--font-size-sm)'
-                }}>
-                    <p style={{ fontWeight: 500, marginBottom: 'var(--space-xs)' }}>Test Account:</p>
-                    <p className="text-muted">Email: admin@stockmaster.com</p>
-                    <p className="text-muted">Password: admin123</p>
-                </div>
             </div>
         </div>
     );

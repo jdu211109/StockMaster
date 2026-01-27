@@ -10,7 +10,11 @@ export default function Transactions() {
 
     const { data, isLoading } = useQuery({
         queryKey: ['transactions', filter],
-        queryFn: () => inventoryService.getTransactions({ ...filter, size: 100 })
+        queryFn: () => {
+            const params = { size: 100 };
+            if (filter.type) params.type = filter.type;
+            return inventoryService.getTransactions(params);
+        }
     });
 
     const { data: products } = useQuery({ 

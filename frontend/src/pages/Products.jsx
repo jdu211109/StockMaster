@@ -150,8 +150,8 @@ export default function Products() {
                                             </div>
                                         )}
                                     </td>
-                                    <td>{parseFloat(p.unit_price).toLocaleString()} ₽</td>
-                                    <td className="text-muted">{parseFloat(p.cost_price).toLocaleString()} ₽</td>
+                                    <td>${parseFloat(p.unit_price).toLocaleString()}</td>
+                                    <td className="text-muted">${parseFloat(p.cost_price).toLocaleString()}</td>
                                     <td>
                                         <span className={`badge ${p.total_stock < 10 ? 'badge-danger' : p.total_stock < 20 ? 'badge-warning' : 'badge-success'}`}>
                                             {p.total_stock} {p.unit || 'pcs'}
