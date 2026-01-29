@@ -4,30 +4,27 @@
 
 A modern, full-stack inventory management solution built with **Python (FastAPI)** and **JavaScript (React)**.
 
-![Dashboard](https://via.placeholder.com/800x400?text=StockMaster+Dashboard)
-
 ## ✨ Features
 
-- **🔐 Authentication** - JWT-based auth with role-based access control (Admin, Manager, Staff)
-- **📦 Product Management** - Full CRUD with SKU, pricing, categories, and suppliers
-- **📊 Inventory Tracking** - Real-time stock levels across multiple locations
-- **🏪 Multi-Location Support** - Manage stores and warehouses independently
-- **📥 Transactions** - Track stock in/out, transfers, and adjustments
-- **⚠️ Low Stock Alerts** - Automatic alerts when inventory falls below reorder levels
-- **📈 Dashboard Analytics** - Visual charts and key metrics at a glance
+- **🔐 Admin Login** - JWT-based authentication with role-based access control
+- **📦 Product Management** - Create, edit, delete products with SKU, pricing, and stock levels
+- **📥 Stock In/Out** - Track incoming and outgoing inventory transactions
+- **📊 Automatic Stock Calculation** - Real-time stock levels updated automatically
+- **⚠️ Low Stock Alerts** - Dashboard notifications when inventory falls below threshold
+- **📤 CSV Export** - Export products and transactions to CSV files
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|------------|
+| Layer        | Technology                                                      |
+| ------------ | --------------------------------------------------------------- |
 | **Frontend** | React 18, Vite, React Router, TanStack Query, Zustand, Recharts |
-| **Backend** | FastAPI, SQLAlchemy 2.0, Pydantic, JWT |
-| **Database** | PostgreSQL |
-| **Styling** | Custom CSS with glassmorphism design |
+| **Backend**  | FastAPI, SQLAlchemy 2.0, Pydantic, JWT                          |
+| **Database** | PostgreSQL                                                      |
+| **Styling**  | Custom CSS with glassmorphism design                            |
 
 ## 🚀 Quick Start
 
-### Option 1: Docker (Recommended)
+### Docker (Recommended)
 
 ```bash
 # Start all services
@@ -38,37 +35,12 @@ docker-compose up -d
 # Backend API: http://localhost:8000/docs
 ```
 
-### Option 2: Manual Setup
+## 🔑 Default Login Credentials
 
-#### Backend
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment
-cp .env.example .env
-# Edit .env with your database credentials
-
-# Run the server
-uvicorn app.main:app --reload
-```
-
-#### Frontend
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-```
+| Field        | Value                 |
+| ------------ | --------------------- |
+| **Email**    | admin@stockmaster.com |
+| **Password** | admin123              |
 
 ## 📁 Project Structure
 
@@ -97,28 +69,27 @@ StockMaster/
 
 ## 🔑 API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/auth/register` | Register new user |
-| POST | `/api/v1/auth/login` | Login and get tokens |
-| GET | `/api/v1/products` | List products |
-| GET | `/api/v1/inventory` | List inventory |
-| GET | `/api/v1/inventory/low-stock` | Get low stock alerts |
-| POST | `/api/v1/transactions` | Create stock movement |
+| Method | Endpoint                      | Description                     |
+| ------ | ----------------------------- | ------------------------------- |
+| POST   | `/api/v1/auth/login`          | Login and get tokens            |
+| GET    | `/api/v1/products`            | List products                   |
+| POST   | `/api/v1/products`            | Create product                  |
+| PUT    | `/api/v1/products/{id}`       | Update product                  |
+| DELETE | `/api/v1/products/{id}`       | Delete product                  |
+| GET    | `/api/v1/inventory/low-stock` | Get low stock alerts            |
+| GET    | `/api/v1/transactions`        | List transactions               |
+| POST   | `/api/v1/transactions`        | Create stock in/out transaction |
 
 **Full API documentation available at:** `http://localhost:8000/docs`
 
 ## 👥 User Roles
 
-| Role | Permissions |
-|------|-------------|
-| **Admin** | Full access to all features |
+| Role        | Permissions                            |
+| ----------- | -------------------------------------- |
+| **Admin**   | Full access to all features            |
 | **Manager** | Create/edit products, manage inventory |
-| **Staff** | View inventory, create transactions |
+| **Staff**   | View inventory, create transactions    |
 
 ## 📝 License
 
 MIT License
-
-Email	admin@stockmaster.com
-Password	admin123
